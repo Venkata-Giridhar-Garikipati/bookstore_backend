@@ -32,6 +32,10 @@ This repository contains the **backend source code** for the **Digital Bookstore
 - **File Upload:** Secure image upload for book covers.
 - **Email Notifications:** Asynchronous email notifications for registration and order updates.
 
+**Future Scope : AI Integration:**
+- **Recommendation Engine:** Personalized book recommendations.
+- **Intelligent Chatbot:** AI-powered customer support.
+- **Predictive Analytics:** Demand forecasting and inventory optimization.
 
 ---
 
@@ -119,10 +123,160 @@ The application will start on http://localhost:8080.
 
 ### Admin
 
-- `GET /api/admin/analytics/dashboard` – Get dashboard analytics
-- `PUT /api/admin/orders/{id}/status` – Update order status
+- `GET /api/orders` – Get all order from the users
+- `GET /api/analytics/dashboard` – Get dashboard analytics
+- `PUT /api/orders/{id}/status` – Update order status
 
 > The complete API documentation is available in the Postman collection.
+
+---
+
+## 🏛️ System Architecture
+
+### Architecture Overview
+
+The Digital Bookstore follows a **layered architecture** pattern with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Client Layer                             │
+│            (Web Browser / Mobile App / Postman)              │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTP/HTTPS
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Presentation Layer                          │
+│                   REST Controllers                           │
+│  ┌────────────┐ ┌────────────┐ ┌──────────────────────┐    │
+│  │   Auth     │ │   Book     │ │   Cart & Order       │    │
+│  │ Controller │ │ Controller │ │    Controllers       │    │
+│  └────────────┘ └────────────┘ └──────────────────────┘    │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Security Layer                             │
+│              JWT Authentication Filter                       │
+│         Spring Security Configuration                        │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Business Layer                             │
+│                   Service Classes                            │
+│  ┌────────────┐ ┌────────────┐ ┌──────────────────────┐    │
+│  │   User     │ │   Book     │ │   Cart & Order       │    │
+│  │  Service   │ │  Service   │ │     Services         │    │
+│  └────────────┘ └────────────┘ └──────────────────────┘    │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Persistence Layer                           │
+│            Spring Data JPA Repositories                      │
+│  ┌────────────┐ ┌────────────┐ ┌──────────────────────┐    │
+│  │   User     │ │   Book     │ │   Cart & Order       │    │
+│  │ Repository │ │ Repository │ │   Repositories       │    │
+│  └────────────┘ └────────────┘ └──────────────────────┘    │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ JPA/Hibernate
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Database Layer                            │
+│                      MySQL 8.0+                              │
+│         (Books, Users, Orders, Cart, Reviews)                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Patterns
+
+#### 1. **Layered Architecture**
+- **Controller Layer:** Handles HTTP requests/responses, input validation, and API documentation
+- **Service Layer:** Contains business logic, transactions, and orchestration
+- **Repository Layer:** Data access abstraction using Spring Data JPA
+- **Entity Layer:** Domain models mapped to database tables
+
+#### 2. **Security Architecture**
+
+```
+Request Flow with JWT Authentication:
+
+Client Request → JWT Filter → Authentication → Authorization → Controller
+                      ↓              ↓              ↓
+                 Validate      Load User     Check Roles
+                   Token       Details        & Permissions
+```
+
+**Security Components:**
+- **JWT Token Provider:** Generates and validates JWT tokens
+- **User Details Service:** Loads user-specific data
+- **Authentication Filter:** Intercepts requests and validates tokens
+- **Password Encoder:** BCrypt for secure password hashing
+
+#### 3. **Database Schema Design**
+
+```
+┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+│   Category  │────────<│     Book     │>────────│   Review    │
+│             │  1:N    │              │  1:N    │             │
+│ - id        │         │ - id         │         │ - id        │
+│ - name      │         │ - title      │         │ - rating    │
+│ - desc      │         │ - price      │         │ - comment   │
+└─────────────┘         │ - stock      │         │ - user_id   │
+                        │ - category_id│         │ - book_id   │
+                        └──────────────┘         └─────────────┘
+                               ↑                        ↑
+                               │                        │
+                               │ N:1                    │ N:1
+                               │                        │
+┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+│    User     │────────<│  CartItem    │         │    Order    │
+│             │  1:N    │              │         │             │
+│ - id        │         │ - id         │<────────│ - id        │
+│ - username  │         │ - quantity   │  1:N    │ - total     │
+│ - email     │         │ - user_id    │         │ - status    │
+│ - password  │         │ - book_id    │         │ - user_id   │
+│ - role      │         └──────────────┘         └─────────────┘
+└─────────────┘                                         │
+       │                                                │ 1:N
+       │                                                ↓
+       │                                         ┌─────────────┐
+       └────────────────────────────────────────>│ OrderItem   │
+                                          1:N    │             │
+                                                 │ - id        │
+                                                 │ - quantity  │
+                                                 │ - price     │
+                                                 │ - order_id  │
+                                                 │ - book_id   │
+                                                 └─────────────┘
+```
+
+#### 4. **Transaction Management**
+
+Critical operations are wrapped in transactions:
+- **Order Placement:** Atomically creates order, updates cart, reduces stock
+- **Cart Operations:** Ensures consistency between cart and book availability
+- **Payment Processing:** Rollback on failure to maintain data integrity
+
+#### 5. **Exception Handling Architecture**
+
+```
+Controller → Service → Repository
+     ↓           ↓          ↓
+     └──────> Exception ───┘
+                  ↓
+       Global Exception Handler
+                  ↓
+       Standardized Error Response
+       (HTTP Status + Message + Timestamp)
+```
+
+
+### Scalability Considerations
+
+- **Stateless Design:** JWT tokens enable horizontal scaling
+- **Database Connection Pooling:** HikariCP for efficient connection management
+- **Async Processing:** Email notifications and analytics run asynchronously
 
 ---
 
@@ -156,4 +310,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📧 Contact
 
-For questions or feedback, please reach out to [giridhar4249@gmail.com](mailto:giridhar4249@gmail.com).
+For questions or feedback, please reach out to [venkatagiridhargarikipati@gmail.com](mailto:venkatagiridhargarikipati@gmail.com).
