@@ -32,10 +32,6 @@ This repository contains the **backend source code** for the **Digital Bookstore
 - **File Upload:** Secure image upload for book covers.
 - **Email Notifications:** Asynchronous email notifications for registration and order updates.
 
-**AI Integration:**
-- **Recommendation Engine:** Personalized book recommendations.
-- **Intelligent Chatbot:** AI-powered customer support.
-- **Predictive Analytics:** Demand forecasting and inventory optimization.
 
 ---
 
@@ -48,11 +44,6 @@ This repository contains the **backend source code** for the **Digital Bookstore
 - **Database:** MySQL
 - **API Testing:** Postman
 - **Build Tool:** Maven
-
-**AI/ML (Integrated Features)**
-- **Libraries:** scikit-learn, TensorFlow, PyTorch
-- **APIs:** OpenAI, Google Cloud AI
-- **Runtime:** Python (Flask/FastAPI) for ML model serving
 
 ---
 
@@ -165,4 +156,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📧 Contact
 
-For questions or feedback, please reach out to [your-email@example.com](mailto:your-email@example.com).
+For questions or feedback, please reach out to [giridhar4249@gmail.com](mailto:giridhar4249@gmail.com).
